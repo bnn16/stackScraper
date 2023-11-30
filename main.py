@@ -8,7 +8,7 @@ from selenium_recaptcha import Recaptcha_Solver
 import time
 
 
-def initBrowser(url, query):
+def initBrowser(query):
     driver = get_chromedriver(use_proxy=True)
     driver.get("https://stackoverflow.com/")
     driver.maximize_window()
@@ -22,24 +22,30 @@ def initBrowser(url, query):
     driver.implicitly_wait(5)
     search_bar.send_keys(Keys.ENTER)
     driver.implicitly_wait(5)
-    solver = Recaptcha_Solver(driver=driver, debug=False)
-    solver.solve_recaptcha()
-    driver.implicitly_wait(5)
-    elements = driver.find_elements(By.CLASS_NAME, "container")
-    return elements
+    solver = Recaptcha_Solver(driver=driver, debug=True)
+    solved = solver.solve_recaptcha()
+    if solved:
+        html = driver.page_source
+        driver.quit()
+        return html
+    else:
+        print("Captcha not solved")
+        driver.quit()
+        return None
+
+
+def getResults(html):
+    soup = BeautifulSoup(html, "html.parser")
+    return soup.find_all("div", class_="s-post-summary js-post-summary")
 
 
 url = "https://stackoverflow.com/"
 
 query = input("Enter your query: ")
 
-r = initBrowser(url, query)
+initBrowser(query)
 
-print(r)
-
-soup = BeautifulSoup(r.text, "html.parser")
-
-print(soup)
+print(getResults())
 
 
 # https://stackoverflow.com/questions/15182496
